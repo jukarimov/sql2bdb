@@ -47,6 +47,10 @@ main(argc, argv)
 	char *database = DATABASE;
 	const char *progname = "ex_access";		/* Program name. */
 
+	int batch = 0;
+	if (argc > 1)
+		batch = 1;
+
 	/* Create and initialize database object, open the database. */
 	if ((ret = db_create(&dbp, NULL, 0)) != 0) {
 		fprintf(stderr,
@@ -74,21 +78,25 @@ main(argc, argv)
 		goto err1;
 	}
 
-	/* Initialize the key/data pair so the flags aren't set. */
-	/* Walk through the database and print out the key/data pairs. */
-	memset(&key, 0, sizeof(key));
-	memset(&data, 0, sizeof(data));
-
 	long long tm_start, tm_end;
 	struct timeval tv;
+	long long delta_ms; 
+	double secs;
 
 	int found = 0;
 	char *line;
 	linenoiseHistoryLoad("history.txt"); /* Load the history at startup */
+
+	if (batch)
+		goto look;
 	while((line = linenoise("lookup:> ")) != NULL) {
 		if (line[0] != '\0') {
 
+look:
 			save_time(tm_start, tv);
+
+			if (batch)
+				line = argv[--argc];
 
 			found = 0;
 			memset(&key, 0, sizeof(key));
@@ -104,19 +112,21 @@ main(argc, argv)
 			save_time(tm_end, tv);
 
 			/* time offset in milliseconds */
-			long long delta_ms = tm_end - tm_start;
-
-			double secs = (double)delta_ms / 1000.0f;
+			delta_ms = tm_end - tm_start;
+			secs = (double)delta_ms / 1000.0f;
 			printf("[result in %f secs]\n", secs);
 
-			puts("\n---------8<----->8-------\n");
+			puts("\n<br>-------8<----->8-------<br>\n");
 			if (found) {
 				printf("%.*s : %.*s\n",
 				    (int)key.size, (char *)key.data,
 				    (int)data.size, (char *)data.data);
 			} else
 				printf("[nothing for: %s]\n", (char *)key.data);
-			puts("\n---------8<----->8-------\n");
+			puts("\n<br>-------8<----->8-------<br>\n");
+
+			if (batch && argc == 1)
+				break;
 
 			linenoiseHistoryAdd(line);
 			linenoiseHistorySave("history.txt"); /* Save every new entry */

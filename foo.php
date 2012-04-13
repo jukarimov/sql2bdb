@@ -5,12 +5,17 @@ $i = "hello";
 if($_POST['msg'] != "")
 	$i = $_POST['msg'];
 
-$o = system("dic $i");
-
 echo "
 <html>
  <head>
   <meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\">
+ </head>
+  <br>
+  <br>
+";
+$o = system("dic $i");
+
+echo "
   <br>
   <br>
    <b>Lookup more</b>
@@ -19,7 +24,6 @@ echo "
   <input type=\"text\" name=\"msg\" />
   <input type=\"submit\" />
   </form>
- </head>
 </html>
 ";
 
