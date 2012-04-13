@@ -47,8 +47,6 @@ main(argc, argv)
 	char *database = DATABASE;
 	const char *progname = "ex_access";		/* Program name. */
 
-	int found = 0;
-
 	/* Create and initialize database object, open the database. */
 	if ((ret = db_create(&dbp, NULL, 0)) != 0) {
 		fprintf(stderr,
@@ -84,12 +82,17 @@ main(argc, argv)
 	long long tm_start, tm_end;
 	struct timeval tv;
 
+	int found = 0;
 	char *line;
 	linenoiseHistoryLoad("history.txt"); /* Load the history at startup */
 	while((line = linenoise("lookup:> ")) != NULL) {
 		if (line[0] != '\0') {
 
 			save_time(tm_start, tv);
+
+			found = 0;
+			memset(&key, 0, sizeof(key));
+			memset(&data, 0, sizeof(data));
 
 			key.data = line;
 			key.size = strlen(line);
@@ -118,7 +121,6 @@ main(argc, argv)
 			linenoiseHistoryAdd(line);
 			linenoiseHistorySave("history.txt"); /* Save every new entry */
 		}
-		free(line);
 	}
 
 	if (ret != DB_NOTFOUND && ret) {
