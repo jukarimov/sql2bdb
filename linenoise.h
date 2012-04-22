@@ -49,6 +49,7 @@ char *linenoise(const char *prompt);
 int linenoiseHistoryAdd(const char *line);
 int linenoiseHistorySetMaxLen(int len);
 int linenoiseHistorySave(char *filename);
+int linenoiseHistorySearch(char *str);
 int linenoiseHistoryLoad(char *filename);
 void linenoiseClearScreen(void);
 

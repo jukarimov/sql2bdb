@@ -23,7 +23,9 @@ extern int getopt(int, char * const *, const char *);
 
 #include <db.h>
 
-#define	DATABASE	"/home/user/MyDocs/oxf.db"
+#define	DATABASE	"/home/user/src/oxf.db"
+#define	HISTORY_FILE	"/home/user/.lookup_history"
+
 int main __P((int, char *[]));
 int usage __P((void));
 
@@ -85,7 +87,7 @@ main(argc, argv)
 
 	int found = 0;
 	char *line;
-	linenoiseHistoryLoad("history.txt"); /* Load the history at startup */
+	linenoiseHistoryLoad(HISTORY_FILE); /* Load the history at startup */
 
 	if (batch)
 		goto look;
@@ -129,7 +131,7 @@ look:
 				break;
 
 			linenoiseHistoryAdd(line);
-			linenoiseHistorySave("history.txt"); /* Save every new entry */
+			linenoiseHistorySave(HISTORY_FILE); /* Save every new entry */
 		}
 	}
 

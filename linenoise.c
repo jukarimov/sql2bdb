@@ -109,6 +109,21 @@ char **history = NULL;
 static void linenoiseAtExit(void);
 int linenoiseHistoryAdd(const char *line);
 
+char *tbuf = NULL;
+int tpos = -1;
+unsigned int pfrom = 0;
+int copy_once_lock = 0;
+
+void copy_once(char **copy, char *data)
+{
+    if (copy_once_lock)
+        return;
+    if (*copy)
+        free(*copy);
+    *copy = strdup(data);
+    copy_once_lock = 1;
+}
+
 static int isUnsupportedTerm(void) {
     char *term = getenv("TERM");
     int j;
@@ -174,6 +189,8 @@ static void disableRawMode(int fd) {
 static void linenoiseAtExit(void) {
     disableRawMode(STDIN_FILENO);
     freeHistory();
+    if (tbuf)
+        free(tbuf);
 }
 
 static int getColumns(void) {
@@ -318,6 +335,12 @@ static int linenoisePrompt(int fd, char *buf, size_t buflen, const char *prompt)
             if (c == 0) continue;
         }
 
+	/* Only keep searching buf if it's Ctrl-r, destroy otherwise */
+	if (c != 18) {
+	    pfrom = 0;
+	    copy_once_lock = 0;
+	}
+
         switch(c) {
         case 13:    /* enter */
             history_len--;
@@ -449,6 +472,14 @@ up_down_arrow:
             pos = len = 0;
             refreshLine(fd,prompt,buf,len,pos,cols);
             break;
+	case 18: /* Ctrl+r, search the history */
+	    copy_once(&tbuf, buf);
+	    if ((tpos = linenoiseHistorySearch(tbuf)) != -1) {
+	        strcpy(buf, history[tpos]);
+	        len = pos = strlen(buf);
+	        refreshLine(fd,prompt,buf,len,pos,cols);
+	    } else
+		pfrom = 0;
         case 11: /* Ctrl+k, delete from current to end of line. */
             buf[pos] = '\0';
             len = pos;
@@ -583,6 +614,22 @@ int linenoiseHistorySave(char *filename) {
         fprintf(fp,"%s\n",history[j]);
     fclose(fp);
     return 0;
+}
+
+int linenoiseHistorySearch(char *str) {
+
+    if (str == NULL)
+	return -1;
+
+    int i;
+    for (i = pfrom; i < history_len; i++) {
+        if (strstr(history[i], str) != NULL) {
+	    pfrom = i + 1;
+	    return i;
+        }
+    }
+
+    return -1;
 }
 
 /* Load the history from the specified file. If the file does not exist
